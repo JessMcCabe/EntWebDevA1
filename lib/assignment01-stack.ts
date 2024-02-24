@@ -6,6 +6,7 @@ import { generateBatch } from "../shared/util";
 import {movieReview} from "../seed/movieReview";
 import * as lambdanode from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as apig from "aws-cdk-lib/aws-apigateway";
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
 
 export class Assignment01Stack extends cdk.Stack {
@@ -13,11 +14,11 @@ export class Assignment01Stack extends cdk.Stack {
     super(scope, id, props);
 
     // The code that defines your stack goes here
-
+    //Table
     const movieReviewsTable = new dynamodb.Table(this, "movieReviews", {
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       partitionKey: { name: "movieId", type: dynamodb.AttributeType.NUMBER },
-      sortKey: {name: "reviewDate", type: dynamodb.AttributeType.STRING},
+      //sortKey: {name: "reviewDate", type: dynamodb.AttributeType.STRING},
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       tableName: "movieReviews",
     });
@@ -38,13 +39,15 @@ export class Assignment01Stack extends cdk.Stack {
       }),
     });
 
+//Functions
+   
 
     const getMovieByIdFn = new lambdanode.NodejsFunction(
       this,
       "GetMovieByIdFn",
       {
         architecture: lambda.Architecture.ARM_64,
-        runtime: lambda.Runtime.NODEJS_16_X,
+        runtime: lambda.Runtime.NODEJS_18_X,
         entry: `${__dirname}/../lambdas/getMovieById.ts`,
         timeout: cdk.Duration.seconds(10),
         memorySize: 128,
@@ -53,22 +56,53 @@ export class Assignment01Stack extends cdk.Stack {
           REGION: 'eu-west-1',
         },
       }
-    );
+      );
 
-    const getMovieByIdURL = getMovieByIdFn.addFunctionUrl({
-      authType: lambda.FunctionUrlAuthType.NONE,
-      cors: {
-        allowedOrigins: ["*"],
+      const getAllMoviesFn = new lambdanode.NodejsFunction(
+        this,
+        "GetAllMoviesFn",
+        {
+          architecture: lambda.Architecture.ARM_64,
+          runtime: lambda.Runtime.NODEJS_18_X,
+          entry: `${__dirname}/../lambdas/getAllMovies.ts`,
+          timeout: cdk.Duration.seconds(10),
+          memorySize: 128,
+          environment: {
+            TABLE_NAME: movieReviewsTable.tableName,
+            REGION: 'eu-west-1',
+          },
+        }
+        );
+
+    //Permissions
+    movieReviewsTable.grantReadData(getMovieByIdFn)
+    movieReviewsTable.grantReadData(getAllMoviesFn)
+
+    // REST API 
+    const api = new apig.RestApi(this, "RestAPI", {
+      description: "movie reviews api",
+      deployOptions: {
+        stageName: "dev",
+      },
+      defaultCorsPreflightOptions: {
+        allowHeaders: ["Content-Type", "X-Amz-Date"],
+        allowMethods: ["OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"],
+        allowCredentials: true,
+        allowOrigins: ["*"],
       },
     });
 
-    movieReviewsTable.grantReadData(getMovieByIdFn)
+    const moviesEndpoint = api.root.addResource("movies");
+    moviesEndpoint.addMethod(
+      "GET",
+      new apig.LambdaIntegration(getAllMoviesFn, { proxy: true })
+    );
 
-    new cdk.CfnOutput(this, "Get Movie Function Url", { value: getMovieByIdURL.url });
+    const movieEndpoint = moviesEndpoint.addResource("{movieId}");
+    movieEndpoint.addMethod(
+      "GET",
+      new apig.LambdaIntegration(getMovieByIdFn, { proxy: true })
+    ); 
     
   }
-
-  
-
-  
 }
