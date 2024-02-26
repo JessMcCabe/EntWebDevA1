@@ -1,5 +1,12 @@
 export type MovieReview =   {
   movieId: number,
+  review: Review[]
+  
+
+  
+}
+
+type Review = {
   reviewerName: string,
   reviewDate: string,
   content: string,
