@@ -1,6 +1,9 @@
 export type MovieReview =   {
   movieId: number,
-  review: Review[]
+  reviewDate: string,
+  reviewerName: string,
+  content: string,
+  rating: 1 | 2 | 3| 4| 5
   
 
   
