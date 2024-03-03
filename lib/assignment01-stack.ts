@@ -23,6 +23,11 @@ export class Assignment01Stack extends cdk.Stack {
       tableName: "movieReviews",
     });
 
+    movieReviewsTable.addGlobalSecondaryIndex({
+      indexName: "rvrName",
+      partitionKey: { name: "reviewerName", type: dynamodb.AttributeType.STRING },
+    });
+
     new custom.AwsCustomResource(this, "movieReviewsddbInitData", {
       onCreate: {
         service: "DynamoDB",

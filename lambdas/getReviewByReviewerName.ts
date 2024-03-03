@@ -1,9 +1,17 @@
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
-
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, GetCommand } from "@aws-sdk/lib-dynamodb";
 
-const ddbDocClient = createDDbDocClient();
+
+import {
+  DynamoDBDocumentClient,
+  QueryCommand,
+  QueryCommandInput,
+} from "@aws-sdk/lib-dynamodb";
+
+
+
+
+const ddbDocClient = createDocumentClient();
 
 export const handler: APIGatewayProxyHandlerV2 = async (event, context) => { 
   try {
@@ -20,13 +28,26 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
         body: JSON.stringify({ Message: "Missing reviewer name" }),
       };
     }
+    let commandInput: QueryCommandInput = {
+      TableName: process.env.TABLE_NAME,
+    };
+   
+      commandInput = {
+        ...commandInput,
+        IndexName: "rvrName",
+        KeyConditionExpression: "reviewerName = :m",
+        ExpressionAttributeValues: {
+          ":m": reviewerName,
+        },
+      };
+    
+    
     const commandOutput = await ddbDocClient.send(
-      new GetCommand({
-        TableName: process.env.TABLE_NAME,
-        Key: { reviewerName: reviewerName },
-      })
-    );
-    if (!commandOutput.Item) {
+      new QueryCommand(commandInput)
+      );
+
+
+      if (!commandOutput.Items) {
       return {
         statusCode: 404,
         headers: {
@@ -35,38 +56,35 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
         body: JSON.stringify({ Message: "Invalid reviewer name" }),
       };
     }
-    const body = {
-      data: commandOutput.Item,
-    };
-
-    // Return Response
-    return {
-      statusCode: 200,
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify(body),
-    };
-  } catch (error: any) {
-    console.log(JSON.stringify(error));
-    return {
-      statusCode: 500,
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({ error }),
-    };
-  }
-};
-
-function createDDbDocClient() {
-  const ddbClient = new DynamoDBClient({ region: process.env.REGION });
-  const marshallOptions = {
-    convertEmptyValues: true,
-    removeUndefinedValues: true,
-    convertClassInstanceToMap: true,
+      return {
+        statusCode: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          data: commandOutput.Items,
+        }),
+      };
+    } catch (error: any) {
+      console.log(JSON.stringify(error));
+      return {
+        statusCode: 500,
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ error }),
+      };
+    }
   };
-  const unmarshallOptions = {
+  
+  function createDocumentClient() {
+    const ddbClient = new DynamoDBClient({ region: process.env.REGION });
+    const marshallOptions = {
+      convertEmptyValues: true,
+      removeUndefinedValues: true,
+      convertClassInstanceToMap: true,
+    };
+    const unmarshallOptions = {
     wrapNumbers: false,
   };
   const translateConfig = { marshallOptions, unmarshallOptions };
