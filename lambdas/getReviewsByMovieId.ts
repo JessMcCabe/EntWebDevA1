@@ -1,9 +1,23 @@
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
-
+import { ReviewsByMovieIdQueryParams } from "../shared/types";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, GetCommand } from "@aws-sdk/lib-dynamodb";
 
-const ddbDocClient = createDDbDocClient();
+
+import {
+  DynamoDBDocumentClient,
+  QueryCommand,
+  QueryCommandInput,
+} from "@aws-sdk/lib-dynamodb";
+
+import Ajv from "ajv";
+import schema from "../shared/types.schema.json";
+
+const ajv = new Ajv();
+const isValidQueryParams = ajv.compile(
+  schema.definitions["ReviewsByMovieIdQueryParams"] || {}
+);
+
+const ddbDocClient = createDocumentClient();
 
 export const handler: APIGatewayProxyHandlerV2 = async (event, context) => { 
   try {
@@ -11,62 +25,54 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
     const parameters = event?.pathParameters;
     const movieId = parameters?.movieId ? parseInt(parameters.movieId) : undefined;
 
-    if (!movieId) {
-      return {
-        statusCode: 404,
-        headers: {
-          "content-type": "application/json",
+    
+    //const movieId = parseInt(queryParams.movieId);
+    let commandInput: QueryCommandInput = {
+      TableName: process.env.TABLE_NAME,
+    };
+   
+      commandInput = {
+        ...commandInput,
+        KeyConditionExpression: "movieId = :m",
+        ExpressionAttributeValues: {
+          ":m": movieId,
         },
-        body: JSON.stringify({ Message: "Missing movie Id" }),
       };
-    }
+    
+    
     const commandOutput = await ddbDocClient.send(
-      new GetCommand({
-        TableName: process.env.TABLE_NAME,
-        Key: { movieId: movieId },
-      })
-    );
-    if (!commandOutput.Item) {
+      new QueryCommand(commandInput)
+      );
+      
       return {
-        statusCode: 404,
+        statusCode: 200,
         headers: {
           "content-type": "application/json",
         },
-        body: JSON.stringify({ Message: "Invalid movie Id" }),
+        body: JSON.stringify({
+          data: commandOutput.Items,
+        }),
+      };
+    } catch (error: any) {
+      console.log(JSON.stringify(error));
+      return {
+        statusCode: 500,
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ error }),
       };
     }
-    const body = {
-      data: commandOutput.Item,
-    };
-
-    // Return Response
-    return {
-      statusCode: 200,
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify(body),
-    };
-  } catch (error: any) {
-    console.log(JSON.stringify(error));
-    return {
-      statusCode: 500,
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({ error }),
-    };
-  }
-};
-
-function createDDbDocClient() {
-  const ddbClient = new DynamoDBClient({ region: process.env.REGION });
-  const marshallOptions = {
-    convertEmptyValues: true,
-    removeUndefinedValues: true,
-    convertClassInstanceToMap: true,
   };
-  const unmarshallOptions = {
+  
+  function createDocumentClient() {
+    const ddbClient = new DynamoDBClient({ region: process.env.REGION });
+    const marshallOptions = {
+      convertEmptyValues: true,
+      removeUndefinedValues: true,
+      convertClassInstanceToMap: true,
+    };
+    const unmarshallOptions = {
     wrapNumbers: false,
   };
   const translateConfig = { marshallOptions, unmarshallOptions };
