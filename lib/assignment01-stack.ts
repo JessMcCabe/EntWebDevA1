@@ -92,7 +92,7 @@ export class Assignment01Stack extends cdk.Stack {
         });
 
 
-        const getReviewsByMovieIdYearFn = new lambdanode.NodejsFunction(
+       /* const getReviewsByMovieIdYearFn = new lambdanode.NodejsFunction(
           this,
           "GetReviewsByMovieIdYearFn",
           {
@@ -106,10 +106,10 @@ export class Assignment01Stack extends cdk.Stack {
               REGION: 'eu-west-1',
             },
           }
-          );
+          );*/
 
 
-          const getReviewsByMovieIdReviewerFn = new lambdanode.NodejsFunction(
+          /*const getReviewsByMovieIdReviewerFn = new lambdanode.NodejsFunction(
             this,
             "GetReviewsByMovieIdReviewerFn",
             {
@@ -123,13 +123,32 @@ export class Assignment01Stack extends cdk.Stack {
                 REGION: 'eu-west-1',
               },
             }
-            );
+            );*/
+
+
+            const getReviewsByMovieIdYrReviewerFn = new lambdanode.NodejsFunction(
+              this,
+              "GetReviewsByMovieIdYrReviewerFn",
+              {
+                architecture: lambda.Architecture.ARM_64,
+                runtime: lambda.Runtime.NODEJS_18_X,
+                entry: `${__dirname}/../lambdas/getReviewsByMovieIdYrReviewer.ts`,
+                timeout: cdk.Duration.seconds(10),
+                memorySize: 128,
+                environment: {
+                  TABLE_NAME: movieReviewsTable.tableName,
+                  REGION: 'eu-west-1',
+                },
+              }
+              );
+    
     //Permissions
     movieReviewsTable.grantReadData(getReviewsByMovieIdFn)
     movieReviewsTable.grantReadData(getReviewByReviewerNameFn)
     movieReviewsTable.grantReadWriteData(newMovieReviewFn)
-    movieReviewsTable.grantReadData(getReviewsByMovieIdYearFn)
-    movieReviewsTable.grantReadData(getReviewsByMovieIdReviewerFn)
+    //movieReviewsTable.grantReadData(getReviewsByMovieIdYearFn)
+    //movieReviewsTable.grantReadData(getReviewsByMovieIdReviewerFn)
+    movieReviewsTable.grantReadData(getReviewsByMovieIdYrReviewerFn)
 
 
     // REST API 
@@ -168,9 +187,9 @@ export class Assignment01Stack extends cdk.Stack {
       "GET",new apig.LambdaIntegration(getReviewsByMovieIdYearFn, { proxy: true })
     );*/
 
-    const reviewsByIdReviewerEndpoint = movieReviewsEndpoint.addResource("{reviewerName}");
+    const reviewsByIdReviewerEndpoint = movieReviewsEndpoint.addResource("{reviewer_year}");
     reviewsByIdReviewerEndpoint.addMethod(
-      "GET",new apig.LambdaIntegration(getReviewsByMovieIdReviewerFn, { proxy: true })
+      "GET",new apig.LambdaIntegration(getReviewsByMovieIdYrReviewerFn, { proxy: true })
     );
 
     const reviewsEndpoint = api.root.addResource("reviews");
