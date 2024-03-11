@@ -107,11 +107,29 @@ export class Assignment01Stack extends cdk.Stack {
             },
           }
           );
+
+
+          const getReviewsByMovieIdReviewerFn = new lambdanode.NodejsFunction(
+            this,
+            "GetReviewsByMovieIdReviewerFn",
+            {
+              architecture: lambda.Architecture.ARM_64,
+              runtime: lambda.Runtime.NODEJS_18_X,
+              entry: `${__dirname}/../lambdas/getReviewsByMovieIdReviewer.ts`,
+              timeout: cdk.Duration.seconds(10),
+              memorySize: 128,
+              environment: {
+                TABLE_NAME: movieReviewsTable.tableName,
+                REGION: 'eu-west-1',
+              },
+            }
+            );
     //Permissions
     movieReviewsTable.grantReadData(getReviewsByMovieIdFn)
     movieReviewsTable.grantReadData(getReviewByReviewerNameFn)
     movieReviewsTable.grantReadWriteData(newMovieReviewFn)
     movieReviewsTable.grantReadData(getReviewsByMovieIdYearFn)
+    movieReviewsTable.grantReadData(getReviewsByMovieIdReviewerFn)
 
 
     // REST API 
@@ -145,9 +163,14 @@ export class Assignment01Stack extends cdk.Stack {
     movieReviewsAddEndpoint.addMethod(
       "POST", new apig.LambdaIntegration(newMovieReviewFn, { proxy: true })
     );
-    const reviewsByYearEndpoint = movieReviewsEndpoint.addResource("{reviewYear}");
+    /*const reviewsByYearEndpoint = movieReviewsEndpoint.addResource("{reviewYear}");
     reviewsByYearEndpoint.addMethod(
       "GET",new apig.LambdaIntegration(getReviewsByMovieIdYearFn, { proxy: true })
+    );*/
+
+    const reviewsByIdReviewerEndpoint = movieReviewsEndpoint.addResource("{reviewerName}");
+    reviewsByIdReviewerEndpoint.addMethod(
+      "GET",new apig.LambdaIntegration(getReviewsByMovieIdReviewerFn, { proxy: true })
     );
 
     const reviewsEndpoint = api.root.addResource("reviews");
