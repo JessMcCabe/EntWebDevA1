@@ -18,7 +18,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
     console.log("Event: ", event);
     const parameters = event?.pathParameters;
     const reviewerName = parameters?.reviewerName ? parameters.reviewerName : undefined;
-
+    
     if (!reviewerName) {
       return {
         statusCode: 404,

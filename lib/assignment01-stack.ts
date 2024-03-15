@@ -27,6 +27,10 @@ export class Assignment01Stack extends cdk.Stack {
       indexName: "rvrName",
       partitionKey: { name: "reviewerName", type: dynamodb.AttributeType.STRING },
     });
+   // movieReviewsTable.addGlobalSecondaryIndex({
+   //   indexName: "ratingIdx",
+   //   partitionKey: { name: "rating", type: dynamodb.AttributeType.NUMBER },
+   // });
 
     new custom.AwsCustomResource(this, "movieReviewsddbInitData", {
       onCreate: {

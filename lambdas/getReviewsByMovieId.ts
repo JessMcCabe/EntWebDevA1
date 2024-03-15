@@ -1,5 +1,5 @@
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
-import { ReviewsByMovieIdQueryParams } from "../shared/types";
+import { ReviewsByMinRatingQueryParams } from "../shared/types";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 
 
@@ -14,23 +14,51 @@ import schema from "../shared/types.schema.json";
 
 const ajv = new Ajv();
 const isValidQueryParams = ajv.compile(
-  schema.definitions["ReviewsByMovieIdQueryParams"] || {}
+  schema.definitions["ReviewsByMinRatingQueryParams"] || {}
 );
 
 const ddbDocClient = createDocumentClient();
 
 export const handler: APIGatewayProxyHandlerV2 = async (event, context) => { 
   try {
+    console.log("In try")
     console.log("Event: ", event);
     const parameters = event?.pathParameters;
     const movieId = parameters?.movieId ? parseInt(parameters.movieId) : undefined;
-
     
-    //const movieId = parseInt(queryParams.movieId);
+    const queryParams = event.queryStringParameters
+    
+
     let commandInput: QueryCommandInput = {
       TableName: process.env.TABLE_NAME,
     };
+
+    console.log("Query params printed:")
+    console.log(queryParams)
+    if(queryParams){
+    const rating = parseInt(queryParams.minRating);
+    
+    //const movieId = parseInt(queryParams.movieId);
+    
    
+    //If we have query params then use them, if not, just use movieId path prameter
+    if("minRating" in queryParams){
+      console.log("In valid query params")
+      commandInput = {
+        ...commandInput,
+        //IndexName: "ratingIdx",
+        KeyConditionExpression: "movieId = :m",// and rating = :r",
+        FilterExpression: "rating > :r",
+        ExpressionAttributeValues: {
+          ":m": movieId,
+          ":r": rating
+        },
+      };
+    }
+
+    }
+    else{
+      console.log("In else")
       commandInput = {
         ...commandInput,
         KeyConditionExpression: "movieId = :m",
@@ -38,6 +66,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
           ":m": movieId,
         },
       };
+    }
     
     
     const commandOutput = await ddbDocClient.send(
