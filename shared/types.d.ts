@@ -23,3 +23,7 @@ type Review = {
 export type ReviewsByMovieIdQueryParams = {
   movieId: string
 }
+
+export type ReviewsByMinRatingQueryParams = {
+  rating: string
+}
