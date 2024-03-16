@@ -22,15 +22,15 @@ e.g.
 
 [Include screenshots from the AWS management console (API Gateway service) that clearly show the deployed API ( ensure the font size is legible). ]
 
-![](./images/api_endpoint_1.png)
+![](./images/api_endpoint_1.PNG)
 
-![](./images/api_endpoint_2.png)
+![](./images/api_endpoint_2.PNG)
 
 ### Authentication (if relevant).
 
 [Include a screenshot from the AWS management console (Cognito User Pools) showing a confirmed user account.]
 
-![](./images/pool.png)
+![](./images/pool.PNG)
 
 ### Independent learning (If relevant).
 
