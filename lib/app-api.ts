@@ -8,6 +8,11 @@ import * as custom from "aws-cdk-lib/custom-resources";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import { generateBatch } from "../shared/util";
 import {movieReview} from "../seed/movieReview";
+import { getConfig } from "../lib/config";
+
+// 1. Retrieving our config and envs
+const config = getConfig();
+
 
 type AppApiProps = {
   userPoolId: string;
@@ -65,8 +70,8 @@ export class AppApi extends Construct {
       runtime: lambda.Runtime.NODEJS_16_X,
       handler: "handler",
       environment: {
-        USER_POOL_ID: props.userPoolId,
-        CLIENT_ID: props.userPoolClientId,
+        USER_POOL_ID: config.USERPOOL_ID,
+        CLIENT_ID: config.CLIENT_ID,
         REGION: cdk.Aws.REGION,
         TABLE_NAME: movieReviewsTable.tableName,
         

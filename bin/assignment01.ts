@@ -3,6 +3,7 @@ import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
 import { Assignment01Stack } from '../lib/assignment01-stack';
 import { AuthAppStack } from '../lib/auth-app-stack';
+import { CognitoStack } from '../lib/cognito-stack';
 
 
 //multi stack deployment
@@ -10,3 +11,5 @@ import { AuthAppStack } from '../lib/auth-app-stack';
 const app = new cdk.App();
 new Assignment01Stack(app, 'AppStack',  { env: { region: "eu-west-1" } });
 new AuthAppStack(app, 'AuthStack',  { env: { region: "eu-west-1" } });
+new CognitoStack(app, 'CognitoStack',  { env: { region: "eu-west-1" },
+terminationProtection: true });

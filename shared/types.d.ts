@@ -43,3 +43,8 @@ export type SignInBody = {
   username: string;
   password: string;
 }
+
+export type UserPool = {
+  userPoolId: string;
+  clientId: string;
+}

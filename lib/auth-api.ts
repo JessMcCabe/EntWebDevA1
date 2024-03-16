@@ -3,6 +3,10 @@ import { Construct } from "constructs";
 import * as apig from "aws-cdk-lib/aws-apigateway";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as node from "aws-cdk-lib/aws-lambda-nodejs";
+import { getConfig } from "../lib/config";
+
+// 1. Retrieving our config and envs
+const config = getConfig();
 
 type AuthApiProps = {
   userPoolId: string;
@@ -10,14 +14,16 @@ type AuthApiProps = {
 };
 
 export class AuthApi extends Construct {
-  private auth: apig.IResource;
-  private userPoolId: string;
-  private userPoolClientId: string;
+   auth: apig.IResource;
+   userPoolId: string;
+   userPoolClientId: string;
+
+   
 
   constructor(scope: Construct, id: string, props: AuthApiProps) {
     super(scope, id);
 
-    ({ userPoolId: this.userPoolId, userPoolClientId: this.userPoolClientId } =
+    ({ userPoolId: config.USERPOOL_ID, userPoolClientId: config.CLIENT_ID } =
       props);
 
     const api = new apig.RestApi(this, "AuthServiceApi", {
@@ -27,6 +33,9 @@ export class AuthApi extends Construct {
         allowOrigins: apig.Cors.ALL_ORIGINS,
       },
     });
+
+    console.log("USer Pool ID IS")
+    console.log(config.USERPOOL_ID)
 
     this.auth = api.root.addResource("auth");
 
@@ -56,8 +65,8 @@ export class AuthApi extends Construct {
       runtime: lambda.Runtime.NODEJS_16_X,
       handler: "handler",
       environment: {
-        USER_POOL_ID: this.userPoolId,
-        CLIENT_ID: this.userPoolClientId,
+        USER_POOL_ID: config.USERPOOL_ID,
+        CLIENT_ID: config.CLIENT_ID,
         REGION: cdk.Aws.REGION,
       },
     };
