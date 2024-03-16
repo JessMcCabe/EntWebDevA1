@@ -37,3 +37,39 @@ e.g.
 [ Briefly explain any aspects of your submission that required independent research and learning, i.e. typically related to the higher grade bands. State the source files that have evidence of this.
 
 
+## Multi Stack
+
+### CognitoStack
+This stack creates a cognito user pool which will be used from all other stacks. Deletion protection is set to true for the stack itself and for the userpool. 
+
+https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-protect-stacks.html
+https://docs.aws.amazon.com/cli/latest/reference/cloudformation/update-termination-protection.html
+
+### AuthStack
+This stack creates the authentication API and uses the userpool created in the cognito stack. This is done by the use of environment variables in a config file which references the userPoolId and clientID of the existing userPool. 
+
+### AppStack
+This stack create the app api and uses the userpool created in the cognito stack. This is done by the use of environment variables in a config file which references the userPoolId and clientID of the existing userPool. This is only used for the protected endpoints which are PUT and POST.
+
+https://conermurphy.com/blog/making-environment-variables-effortless-aws-cdk-stacks
+
+### Stack Deployment Notes
+Required Dependencies:
+You will need to create a .env file at the root of the project. This file will store the user pool client ID and userpool ID in variables. 
+
+USERPOOL_ID=<your-userpool-id>
+CLIENT_ID=<userpool-client-id>
+
+![](./images/.env_example.PNG)
+
+![](./images/client_id.PNG)
+
+![](./images/userpool_id.PNG)
+
+You are required to deploy the CognitoStack first, this will create your userpool and you will then take the userpool ID and Client ID from the created userpool and update your .env file with the values.
+
+cdk deploy CognitoStack
+
+You can then deploy both the AuthStack and the AppStack together
+
+cdk deploy AuthStack AppStack
