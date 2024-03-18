@@ -28,6 +28,11 @@ export type ReviewsByMinRatingQueryParams = {
   rating: string
 }
 
+
+export type ReviewsTranslation = {
+  language: string
+}
+
 export type SignUpBody = {
   username: string;
   password: string;

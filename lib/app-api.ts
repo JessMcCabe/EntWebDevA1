@@ -76,6 +76,13 @@ export class AppApi extends Construct {
         TABLE_NAME: movieReviewsTable.tableName,
         
       },
+      iamRoleStatements: [
+        {
+            Effect: 'Allow',
+            Action: 'translate:*',
+            Resource: '*',
+        },
+    ],
     };
 
    
@@ -106,6 +113,13 @@ export class AppApi extends Construct {
           }
           );
 
+          const getReviewByReviewerNameMovieIdFn = new node.NodejsFunction(this,  "GetReviewsByReviewerNameMovieIdFn",{
+            ...appCommonFnProps,
+              entry: `${__dirname}/../lambdas/getReviewByReviewerNameMovieId.ts`,
+              
+            }
+            );
+
 
 
 
@@ -114,6 +128,7 @@ export class AppApi extends Construct {
    movieReviewsTable.grantReadData(getReviewByReviewerNameFn)
    movieReviewsTable.grantReadWriteData(newMovieReviewFn)
    movieReviewsTable.grantReadData(getReviewsByMovieIdYrReviewerFn)
+   movieReviewsTable.grantReadData(getReviewByReviewerNameMovieIdFn)
 
 
     const authorizerFn = new node.NodejsFunction(this, "AuthorizerFn", {
@@ -171,6 +186,14 @@ export class AppApi extends Construct {
       "GET",new apig.LambdaIntegration(getReviewByReviewerNameFn, { proxy: true })
     );
 
+    const reviewerNameMovieIdEndpoint = reviewerNameEndpoint.addResource("{movieId}");
+    const movieReviewsTransEndpoint = reviewerNameMovieIdEndpoint.addResource("translation");
+
+    movieReviewsTransEndpoint.addMethod(
+      "GET",new apig.LambdaIntegration(getReviewByReviewerNameMovieIdFn, { proxy: true })
+    );
+
+    
 
   }
 }
