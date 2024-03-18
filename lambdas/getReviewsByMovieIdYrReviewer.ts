@@ -27,7 +27,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
 
     
     const movieId = parameters?.movieId ? parseInt(parameters.movieId) : undefined;
-    const reviewer_year_num = parameters?.reviewer_year ? parseInt(parameters.reviewer_year) : "";
+    const reviewer_year_num = parameters?.reviewerName ? parseInt(parameters.reviewerName) : "";
     
 
     //https://stackoverflow.com/questions/23437476/in-typescript-how-to-check-if-a-string-is-numeric
@@ -46,7 +46,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
     };
 
     if(isNumeric(reviewer_year_num)){
-      const reviewDate = parameters?.reviewer_year ? (parameters.reviewer_year) : undefined;
+      const reviewDate = parameters?.reviewerName ? (parameters.reviewerName) : undefined;
       route = "reviewDate"
       commandInput = {
         ...commandInput,
@@ -64,7 +64,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
       }
       if(!isNumeric(reviewer_year_num))
       {
-      const reviewerName = parameters?.reviewer_year ? (parameters.reviewer_year) : undefined;
+      const reviewerName = parameters?.reviewerName ? (parameters.reviewerName) : undefined;
       route = "reviewerName"
       console.log(reviewerName)
       commandInput = {

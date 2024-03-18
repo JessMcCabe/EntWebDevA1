@@ -120,6 +120,13 @@ export class AppApi extends Construct {
             }
             );
 
+            const updateReviewsFn = new node.NodejsFunction(this,  "UpdateReviewsFn",{
+              ...appCommonFnProps,
+                entry: `${__dirname}/../lambdas/updateReview.ts`,
+                
+              }
+              );
+
 
 
 
@@ -129,6 +136,7 @@ export class AppApi extends Construct {
    movieReviewsTable.grantReadWriteData(newMovieReviewFn)
    movieReviewsTable.grantReadData(getReviewsByMovieIdYrReviewerFn)
    movieReviewsTable.grantReadData(getReviewByReviewerNameMovieIdFn)
+   movieReviewsTable.grantReadWriteData(updateReviewsFn)
 
 
     const authorizerFn = new node.NodejsFunction(this, "AuthorizerFn", {
@@ -172,7 +180,7 @@ export class AppApi extends Construct {
        });
     
   
-    const reviewsByIdReviewerEndpoint = movieReviewsEndpoint.addResource("{reviewer_year}");
+    const reviewsByIdReviewerEndpoint = movieReviewsEndpoint.addResource("{reviewerName}");
     reviewsByIdReviewerEndpoint.addMethod(
       "GET",new apig.LambdaIntegration(getReviewsByMovieIdYrReviewerFn, { proxy: true })
     );
@@ -185,6 +193,13 @@ export class AppApi extends Construct {
     reviewerNameEndpoint.addMethod(
       "GET",new apig.LambdaIntegration(getReviewByReviewerNameFn, { proxy: true })
     );
+
+   // const UpdateReview = movieReviewsEndpoint.addResource("{reviewerName}");
+   reviewsByIdReviewerEndpoint.addMethod(
+      "PUT",new apig.LambdaIntegration(updateReviewsFn), { 
+        authorizer: requestAuthorizer,
+        authorizationType: apig.AuthorizationType.CUSTOM,
+         });
 
     const reviewerNameMovieIdEndpoint = reviewerNameEndpoint.addResource("{movieId}");
     const movieReviewsTransEndpoint = reviewerNameMovieIdEndpoint.addResource("translation");
