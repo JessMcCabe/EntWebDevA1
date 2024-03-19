@@ -9,6 +9,8 @@ import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import { generateBatch } from "../shared/util";
 import {movieReview} from "../seed/movieReview";
 import { getConfig } from "../lib/config";
+import * as iam from '@aws-cdk/aws-iam';
+import { PolicyStatement } from "aws-cdk-lib/aws-iam";
 
 // 1. Retrieving our config and envs
 const config = getConfig();
@@ -76,13 +78,7 @@ export class AppApi extends Construct {
         TABLE_NAME: movieReviewsTable.tableName,
         
       },
-      iamRoleStatements: [
-        {
-            Effect: 'Allow',
-            Action: 'translate:*',
-            Resource: '*',
-        },
-    ],
+     
     };
 
    
@@ -127,8 +123,12 @@ export class AppApi extends Construct {
               }
               );
 
+              
 
-
+              getReviewByReviewerNameMovieIdFn.addToRolePolicy(new PolicyStatement({
+                  actions: ['translate:TranslateText'],
+                  resources: ["*"],
+              }))
 
    //Permissions
    movieReviewsTable.grantReadData(getReviewsByMovieIdFn)
@@ -137,7 +137,7 @@ export class AppApi extends Construct {
    movieReviewsTable.grantReadData(getReviewsByMovieIdYrReviewerFn)
    movieReviewsTable.grantReadData(getReviewByReviewerNameMovieIdFn)
    movieReviewsTable.grantReadWriteData(updateReviewsFn)
-
+ 
 
     const authorizerFn = new node.NodejsFunction(this, "AuthorizerFn", {
       ...appCommonFnProps,
